@@ -4,7 +4,7 @@ import json
 # Define the API endpoint and your event key
 api_url = "https://www.thebluealliance.com/api/v3"
 event_key = "2025inmis"
-auth_key = "g9qQvmzNuLVfnM9ZpCPcwZS5zh4v0f2rg5nsLbkLjsipGPtiktc9jKzhVhgs38oS"
+auth_key = "API_KEY"
 
 
 # Define the headers with your authentication key

@@ -4,7 +4,6 @@ This Python script retrieves match schedules from The Blue Alliance API for a sp
 
 ## Features
 - Retrieves match data for a specified event.
-- Filters the match data to include only the Blue 1 or Blue 2 team (depending on the script you use).
 - Saves the filtered match data into a JSON file.
 
 ## Requirements

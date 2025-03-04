@@ -1,5 +1,7 @@
 import requests
 import json
+import sys
+import os
 
 # Define the API endpoint and your event key
 api_url = "https://www.thebluealliance.com/api/v3"
@@ -20,7 +22,7 @@ def get_match_schedule(event_key):
         print(f"Failed to retrieve matches: {response.status_code}")
         return None
 
-# Function to transform match data into the desired format with only Blue 1 team
+# Function to transform match data into the desired format with matches in order
 def transform_matches_data(matches):
     output = {}
     # Sort matches by match_number (ascending)
@@ -34,13 +36,18 @@ def transform_matches_data(matches):
         teams = []
         alliances = match.get('alliances', {})
 
-        # Process the blue alliance teams
+        # Process red alliance teams first (positions 0-2)
+        red_teams = alliances.get('red', {}).get('team_keys', [])
+        for team in red_teams:
+            # Remove the "frc" prefix if present
+            team_number = team[3:] if team.startswith("frc") else team
+            teams.append({"number": team_number, "color": "red"})
+
+        # Process blue alliance teams next (positions 3-5)
         blue_teams = alliances.get('blue', {}).get('team_keys', [])
-        if len(blue_teams) >= 1:
-            # Get the first team in the blue alliance (Blue 1)
-            blue1_team = blue_teams[0]
-            blue1_team_number = blue1_team[3:] if blue1_team.startswith("frc") else blue1_team
-            teams.append({"number": blue1_team_number, "color": "blue"})
+        for team in blue_teams:
+            team_number = team[3:] if team.startswith("frc") else team
+            teams.append({"number": team_number, "color": "blue"})
 
         output[match_key] = {
             "match_number": match_key,
@@ -49,24 +56,27 @@ def transform_matches_data(matches):
     return output
 
 # Function to save match data to a JSON file
-def save_matches_to_file(matches_data, filename="blue1_match_schedule.json"):
+def save_matches_to_file(matches_data, directory, filename="match_schedule.json"):
     try:
-        with open(filename, "w") as file:
+        # Construct the full path to save the JSON file in the specified directory
+        file_path = os.path.join(directory, filename)
+        with open(file_path, "w") as file:
             json.dump(matches_data, file, indent=4)
-        print(f"Data saved to {filename}")
+        print(f"Data saved to {file_path}")
     except Exception as e:
         print("Error saving data:", e)
 
 # Main function
 def main():
+    # Get the directory to save the file (passed as argument)
+    json_directory = sys.argv[1]  # Get the JSON directory passed as argument
+
     matches = get_match_schedule(event_key)
     if matches:
         # Transform the data into the desired format
         transformed_matches = transform_matches_data(matches)
-        # Optionally, print the transformed data
-        #print(json.dumps(transformed_matches, indent=4))
-        # Save the transformed data to blue1_match_schedule.json
-        save_matches_to_file(transformed_matches)
+        # Save the transformed data to the specified directory
+        save_matches_to_file(transformed_matches, json_directory)
 
 if __name__ == "__main__":
     main()

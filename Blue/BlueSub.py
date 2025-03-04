@@ -1,5 +1,7 @@
 import requests
 import json
+import sys
+import os
 
 # Define the API endpoint and your event key
 api_url = "https://www.thebluealliance.com/api/v3"
@@ -20,10 +22,9 @@ def get_match_schedule(event_key):
         print(f"Failed to retrieve matches: {response.status_code}")
         return None
 
-# Function to transform match data into the desired format with all teams in Blue and Red alliances
+# Function to transform match data for Blue Subjective
 def transform_matches_data(matches):
     output = {}
-    # Sort matches by match_number (ascending)
     sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
     for match in sorted_matches:
@@ -34,17 +35,11 @@ def transform_matches_data(matches):
         teams = []
         alliances = match.get('alliances', {})
 
-        # Process red alliance teams
-        red_teams = alliances.get('red', {}).get('team_keys', [])
-        for team in red_teams:
-            team_number = team[3:] if team.startswith("frc") else team
-            teams.append({"number": team_number, "color": "red"})
-
-        # Process blue alliance teams
+        # Process blue alliance, collecting all three teams for subjective data
         blue_teams = alliances.get('blue', {}).get('team_keys', [])
         for team in blue_teams:
             team_number = team[3:] if team.startswith("frc") else team
-            teams.append({"number": team_number, "color": "blue"})
+            teams.append({"number": team_number, "color": "blue", "subjective_data": {}})
 
         output[match_key] = {
             "match_number": match_key,
@@ -53,24 +48,23 @@ def transform_matches_data(matches):
     return output
 
 # Function to save match data to a JSON file
-def save_matches_to_file(matches_data, filename="subjective_match_schedule.json"):
+def save_matches_to_file(matches_data, directory, filename="BlueSubjective.json"):
     try:
-        with open(filename, "w") as file:
+        file_path = os.path.join(directory, filename)
+        with open(file_path, "w") as file:
             json.dump(matches_data, file, indent=4)
-        print(f"Data saved to {filename}")
+        print(f"Data saved to {file_path}")
     except Exception as e:
         print("Error saving data:", e)
 
 # Main function
 def main():
+    json_directory = sys.argv[1]  # Get the JSON directory passed from run_all_scripts.py
+
     matches = get_match_schedule(event_key)
     if matches:
-        # Transform the data into the desired format
         transformed_matches = transform_matches_data(matches)
-        # Optionally, print the transformed data
-        #print(json.dumps(transformed_matches, indent=4))
-        # Save the transformed data to subjective_match_schedule.json
-        save_matches_to_file(transformed_matches)
+        save_matches_to_file(transformed_matches, json_directory)
 
 if __name__ == "__main__":
     main()

@@ -1,12 +1,11 @@
 import requests
 import json
-import sys
 import os
 
 # Define the API endpoint and your event key
 api_url = "https://www.thebluealliance.com/api/v3"
 event_key = "2025inmis"
-auth_key = "API_KEY"
+auth_key = "LPBFcLNYuYkJhRemUEfXyXNCz8qLHLyIGO7LtKQHY25vzayHqelEodBQdZeJCFrq"
 
 # Define the headers with your authentication key
 headers = {
@@ -22,44 +21,30 @@ def get_match_schedule(event_key):
         print(f"Failed to retrieve matches: {response.status_code}")
         return None
 
-# Function to transform match data into the desired format with matches in order
-def transform_matches_data(matches):
-    output = {}
-    # Sort matches by match_number (ascending)
+# Function to extract only blue alliance teams
+def extract_blue_alliance(matches):
+    blue_matches = {}
     sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
     for match in sorted_matches:
         match_number = match.get('match_number')
         if match_number is None:
             continue
-        match_key = str(match_number)
-        teams = []
-        alliances = match.get('alliances', {})
 
-        # Process red alliance teams first (positions 0-2)
-        red_teams = alliances.get('red', {}).get('team_keys', [])
-        for team in red_teams:
-            # Remove the "frc" prefix if present
-            team_number = team[3:] if team.startswith("frc") else team
-            teams.append({"number": team_number, "color": "red"})
+        blue_teams = match.get('alliances', {}).get('blue', {}).get('team_keys', [])
+        teams = [{"number": team[3:], "color": "blue"} for team in blue_teams if team.startswith("frc")]
 
-        # Process blue alliance teams next (positions 3-5)
-        blue_teams = alliances.get('blue', {}).get('team_keys', [])
-        for team in blue_teams:
-            team_number = team[3:] if team.startswith("frc") else team
-            teams.append({"number": team_number, "color": "blue"})
-
-        output[match_key] = {
-            "match_number": match_key,
+        blue_matches[str(match_number)] = {
+            "match_number": str(match_number),
             "teams": teams
         }
-    return output
 
-# Function to save match data to a JSON file
-def save_matches_to_file(matches_data, directory, filename="match_schedule.json"):
+    return {"Blue 1": blue_matches}  # Wrap in "Blue 1" key
+
+# Function to save blue alliance data to a JSON file
+def save_matches_to_file(matches_data, filename="BlueOne.json"):
     try:
-        # Construct the full path to save the JSON file in the specified directory
-        file_path = os.path.join(directory, filename)
+        file_path = os.path.join(os.getcwd(), filename)  # Save in current directory
         with open(file_path, "w") as file:
             json.dump(matches_data, file, indent=4)
         print(f"Data saved to {file_path}")
@@ -68,15 +53,10 @@ def save_matches_to_file(matches_data, directory, filename="match_schedule.json"
 
 # Main function
 def main():
-    # Get the directory to save the file (passed as argument)
-    json_directory = sys.argv[1]  # Get the JSON directory passed as argument
-
     matches = get_match_schedule(event_key)
     if matches:
-        # Transform the data into the desired format
-        transformed_matches = transform_matches_data(matches)
-        # Save the transformed data to the specified directory
-        save_matches_to_file(transformed_matches, json_directory)
+        blue_alliance_data = extract_blue_alliance(matches)
+        save_matches_to_file(blue_alliance_data)  # Saves to "BlueOne.json"
 
 if __name__ == "__main__":
     main()

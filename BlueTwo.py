@@ -1,12 +1,11 @@
 import requests
 import json
-import sys
 import os
 
 # Define the API endpoint and your event key
 api_url = "https://www.thebluealliance.com/api/v3"
 event_key = "2025inmis"
-auth_key = "API_KEY"
+auth_key = "LPBFcLNYuYkJhRemUEfXyXNCz8qLHLyIGO7LtKQHY25vzayHqelEodBQdZeJCFrq"
 
 # Define the headers with your authentication key
 headers = {
@@ -22,35 +21,31 @@ def get_match_schedule(event_key):
         print(f"Failed to retrieve matches: {response.status_code}")
         return None
 
-# Function to transform match data (modify this based on the purpose of the script)
-def transform_matches_data(matches):
-    output = {}
+# Function to extract only the THIRD blue alliance team
+def extract_third_blue_team(matches):
+    blue_matches = {}
     sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
     for match in sorted_matches:
         match_number = match.get('match_number')
         if match_number is None:
             continue
-        match_key = str(match_number)
-        teams = []
-        alliances = match.get('alliances', {})
 
-        # Process blue alliance, focusing on Blue 2
-        blue_teams = alliances.get('blue', {}).get('team_keys', [])
-        if len(blue_teams) >= 2:
-            team_number = blue_teams[1][3:] if blue_teams[1].startswith("frc") else blue_teams[1]
-            teams.append({"number": team_number, "color": "blue"})
+        blue_teams = match.get('alliances', {}).get('blue', {}).get('team_keys', [])
+        
+        if len(blue_teams) >= 3:  # Ensure there are at least three blue teams
+            third_blue_team = blue_teams[1][2:] if blue_teams[1].startswith("frc") else blue_teams[1]
+            blue_matches[str(match_number)] = {
+                "match_number": str(match_number),
+                "team": {"number": third_blue_team, "color": "blue"}
+            }
 
-        output[match_key] = {
-            "match_number": match_key,
-            "teams": teams
-        }
-    return output
+    return {"Blue 3": blue_matches}  # Wrap in "Blue 3" key
 
-# Function to save match data to a JSON file
-def save_matches_to_file(matches_data, directory, filename="BlueTwo.json"):
+# Function to save blue alliance data to a JSON file
+def save_matches_to_file(matches_data, filename="BlueTwo.json"):
     try:
-        file_path = os.path.join(directory, filename)
+        file_path = os.path.join(os.getcwd(), filename)  # Save in current directory
         with open(file_path, "w") as file:
             json.dump(matches_data, file, indent=4)
         print(f"Data saved to {file_path}")
@@ -59,12 +54,10 @@ def save_matches_to_file(matches_data, directory, filename="BlueTwo.json"):
 
 # Main function
 def main():
-    json_directory = sys.argv[1]  # Get the JSON directory passed from run_all_scripts.py
-
     matches = get_match_schedule(event_key)
     if matches:
-        transformed_matches = transform_matches_data(matches)
-        save_matches_to_file(transformed_matches, json_directory)
+        blue_alliance_data = extract_third_blue_team(matches)
+        save_matches_to_file(blue_alliance_data)  # Saves to "BlueTwo.json"
 
 if __name__ == "__main__":
     main()

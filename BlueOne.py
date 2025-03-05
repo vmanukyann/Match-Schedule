@@ -21,8 +21,8 @@ def get_match_schedule(event_key):
         print(f"Failed to retrieve matches: {response.status_code}")
         return None
 
-# Function to extract only blue alliance teams
-def extract_blue_alliance(matches):
+# Function to extract only the FIRST blue alliance team
+def extract_first_blue_team(matches):
     blue_matches = {}
     sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
@@ -32,12 +32,13 @@ def extract_blue_alliance(matches):
             continue
 
         blue_teams = match.get('alliances', {}).get('blue', {}).get('team_keys', [])
-        teams = [{"number": team[3:], "color": "blue"} for team in blue_teams if team.startswith("frc")]
-
-        blue_matches[str(match_number)] = {
-            "match_number": str(match_number),
-            "teams": teams
-        }
+        
+        if blue_teams:  # Ensure there is at least one blue team
+            first_blue_team = blue_teams[0][3:] if blue_teams[0].startswith("frc") else blue_teams[0]
+            blue_matches[str(match_number)] = {
+                "match_number": str(match_number),
+                "team": {"number": first_blue_team, "color": "blue"}
+            }
 
     return {"Blue 1": blue_matches}  # Wrap in "Blue 1" key
 
@@ -55,7 +56,7 @@ def save_matches_to_file(matches_data, filename="BlueOne.json"):
 def main():
     matches = get_match_schedule(event_key)
     if matches:
-        blue_alliance_data = extract_blue_alliance(matches)
+        blue_alliance_data = extract_first_blue_team(matches)
         save_matches_to_file(blue_alliance_data)  # Saves to "BlueOne.json"
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import os
 
 # Define the API endpoint and your event key
 api_url = "https://www.thebluealliance.com/api/v3"
-event_key = "2025inmis"
+event_key = "2025inlaf"
 auth_key = "LPBFcLNYuYkJhRemUEfXyXNCz8qLHLyIGO7LtKQHY25vzayHqelEodBQdZeJCFrq"
 
 # Define the headers with your authentication key
@@ -34,7 +34,7 @@ def extract_second_blue_team(matches):
         blue_teams = match.get('alliances', {}).get('blue', {}).get('team_keys', [])
         
         if len(blue_teams) >= 2:  # Ensure there are at least two blue teams
-            second_blue_team = blue_teams[1][3:] if blue_teams[1].startswith("frc") else blue_teams[1]
+            second_blue_team = blue_teams[1][2:] if blue_teams[1].startswith("frc") else blue_teams[1]
             blue_matches[str(match_number)] = {
                 "match_number": str(match_number),
                 "team": {"number": second_blue_team, "color": "blue"}

@@ -4,7 +4,7 @@ import os
 
 # Define the API endpoint and your event key
 api_url = "https://www.thebluealliance.com/api/v3"
-event_key = "2025inmis"
+event_key = "2025inlaf"
 auth_key = "LPBFcLNYuYkJhRemUEfXyXNCz8qLHLyIGO7LtKQHY25vzayHqelEodBQdZeJCFrq"
 
 # Define the headers with your authentication key
@@ -21,8 +21,8 @@ def get_match_schedule(event_key):
         print(f"Failed to retrieve matches: {response.status_code}")
         return None
 
-# Function to extract only the SECOND red alliance team (Red 2)
-def extract_second_red_team(matches):
+# Function to extract only the FIRST red alliance team
+def extract_first_red_team(matches):
     red_matches = {}
     sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
@@ -32,13 +32,12 @@ def extract_second_red_team(matches):
             continue
 
         red_teams = match.get('alliances', {}).get('red', {}).get('team_keys', [])
-
-        # Ensure there are at least two red teams
-        if len(red_teams) > 1:
-            second_red_team = red_teams[1][3:] if red_teams[1].startswith("frc") else red_teams[1]
+        
+        if red_teams:  # Ensure there is at least one red team
+            first_red_team = red_teams[1][2:] if red_teams[1].startswith("frc") else red_teams[1]
             red_matches[str(match_number)] = {
                 "match_number": str(match_number),
-                "team": {"number": second_red_team, "color": "red"}
+                "team": {"number": first_red_team, "color": "red"}
             }
 
     return {"Red 2": red_matches}  # Wrap in "Red 2" key
@@ -57,7 +56,7 @@ def save_matches_to_file(matches_data, filename="RedTwo.json"):
 def main():
     matches = get_match_schedule(event_key)
     if matches:
-        red_alliance_data = extract_second_red_team(matches)
+        red_alliance_data = extract_first_red_team(matches)
         save_matches_to_file(red_alliance_data)  # Saves to "RedTwo.json"
 
 if __name__ == "__main__":

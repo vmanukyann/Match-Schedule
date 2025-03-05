@@ -21,8 +21,8 @@ def get_match_schedule(event_key):
         print(f"Failed to retrieve matches: {response.status_code}")
         return None
 
-# Function to extract only the THIRD blue alliance team
-def extract_third_blue_team(matches):
+# Function to extract only the SECOND blue alliance team
+def extract_second_blue_team(matches):
     blue_matches = {}
     sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
@@ -33,14 +33,14 @@ def extract_third_blue_team(matches):
 
         blue_teams = match.get('alliances', {}).get('blue', {}).get('team_keys', [])
         
-        if len(blue_teams) >= 3:  # Ensure there are at least three blue teams
-            third_blue_team = blue_teams[1][2:] if blue_teams[1].startswith("frc") else blue_teams[1]
+        if len(blue_teams) >= 2:  # Ensure there are at least two blue teams
+            second_blue_team = blue_teams[1][3:] if blue_teams[1].startswith("frc") else blue_teams[1]
             blue_matches[str(match_number)] = {
                 "match_number": str(match_number),
-                "team": {"number": third_blue_team, "color": "blue"}
+                "team": {"number": second_blue_team, "color": "blue"}
             }
 
-    return {"Blue 3": blue_matches}  # Wrap in "Blue 3" key
+    return {"Blue 2": blue_matches}  # Wrap in "Blue 2" key
 
 # Function to save blue alliance data to a JSON file
 def save_matches_to_file(matches_data, filename="BlueTwo.json"):
@@ -56,7 +56,7 @@ def save_matches_to_file(matches_data, filename="BlueTwo.json"):
 def main():
     matches = get_match_schedule(event_key)
     if matches:
-        blue_alliance_data = extract_third_blue_team(matches)
+        blue_alliance_data = extract_second_blue_team(matches)
         save_matches_to_file(blue_alliance_data)  # Saves to "BlueTwo.json"
 
 if __name__ == "__main__":

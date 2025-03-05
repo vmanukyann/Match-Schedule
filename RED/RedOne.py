@@ -1,7 +1,6 @@
 import requests
 import json
 import os
-import sys
 
 # Define the API endpoint and your event key
 api_url = "https://www.thebluealliance.com/api/v3"
@@ -55,14 +54,6 @@ def save_matches_to_file(matches_data, filename="RedOne.json"):
 
 # Main function
 def main():
-    # Check if a directory argument is passed, otherwise use default
-    if len(sys.argv) > 1:
-        json_directory = sys.argv[1]  # Use directory passed via command line
-    else:
-        json_directory = os.getcwd()  # Default to current directory
-    
-    print(f"Saving to directory: {json_directory}")
-
     matches = get_match_schedule(event_key)
     if matches:
         red_alliance_data = extract_first_red_team(matches)

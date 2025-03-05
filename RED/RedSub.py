@@ -1,12 +1,11 @@
 import requests
 import json
-import sys
 import os
 
 # Define the API endpoint and your event key
 api_url = "https://www.thebluealliance.com/api/v3"
 event_key = "2025inmis"
-auth_key = "LPBFcLNYuYkJhRemUEfXyXNCz8qLHLyIGO7LtKQHY25vzayHqelEodBQdZeJCFrq		"
+auth_key = "LPBFcLNYuYkJhRemUEfXyXNCz8qLHLyIGO7LtKQHY25vzayHqelEodBQdZeJCFrq"
 
 # Define the headers with your authentication key
 headers = {
@@ -22,35 +21,30 @@ def get_match_schedule(event_key):
         print(f"Failed to retrieve matches: {response.status_code}")
         return None
 
-# Function to transform match data for Red Subjective
-def transform_matches_data(matches):
-    output = {}
+# Function to extract all red alliance teams
+def extract_red_alliance(matches):
+    red_matches = {}
     sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
     for match in sorted_matches:
         match_number = match.get('match_number')
         if match_number is None:
             continue
-        match_key = str(match_number)
-        teams = []
-        alliances = match.get('alliances', {})
 
-        # Process red alliance, collecting all three teams for subjective data
-        red_teams = alliances.get('red', {}).get('team_keys', [])
-        for team in red_teams:
-            team_number = team[3:] if team.startswith("frc") else team
-            teams.append({"number": team_number, "color": "red", "subjective_data": {}})
+        red_teams = match.get('alliances', {}).get('red', {}).get('team_keys', [])
+        teams = [{"number": team[3:], "color": "red"} for team in red_teams if team.startswith("frc")]
 
-        output[match_key] = {
-            "match_number": match_key,
+        red_matches[str(match_number)] = {
+            "match_number": str(match_number),
             "teams": teams
         }
-    return output
 
-# Function to save match data to a JSON file
-def save_matches_to_file(matches_data, directory, filename="RedSubjective.json"):
+    return {"Red": red_matches}  # Wrap in "Red" key
+
+# Function to save red alliance data to RedSub.JSON
+def save_matches_to_file(matches_data, filename="RedSub.json"):
     try:
-        file_path = os.path.join(directory, filename)
+        file_path = os.path.join(os.getcwd(), filename)  # Save in current directory
         with open(file_path, "w") as file:
             json.dump(matches_data, file, indent=4)
         print(f"Data saved to {file_path}")
@@ -59,12 +53,10 @@ def save_matches_to_file(matches_data, directory, filename="RedSubjective.json")
 
 # Main function
 def main():
-    json_directory = sys.argv[1]  # Get the JSON directory passed from run_all_scripts.py
-
     matches = get_match_schedule(event_key)
     if matches:
-        transformed_matches = transform_matches_data(matches)
-        save_matches_to_file(transformed_matches, json_directory)
+        red_alliance_data = extract_red_alliance(matches)
+        save_matches_to_file(red_alliance_data)  # Saves to "RedSub.json"
 
 if __name__ == "__main__":
     main()

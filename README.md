@@ -1,6 +1,6 @@
-# The Blue Alliance Match Data JSON Config
+# The Blue Alliance Match Data JSON 
 
-This Python script retrieves match schedules from The Blue Alliance API for a specified event, filters the data to include all 6 objective robot scouting and 2 subjective alliance each match, and saves the filtered data to a JSON file.
+This Python script retrieves match schedules from The Blue Alliance API for a specified event, filters the data to include all 6 objective robot scouting and 2 subjective alliances for each match, and saves the filtered data to a JSON file.
 
 ## Features
 - Retrieves match data for a specified event.

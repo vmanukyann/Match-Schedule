@@ -21,8 +21,8 @@ def get_match_schedule(event_key):
         print(f"Failed to retrieve matches: {response.status_code}")
         return None
 
-# Function to extract only the FIRST red alliance team
-def extract_first_red_team(matches):
+# Function to extract only the THIRD red alliance team
+def extract_third_red_team(matches):
     red_matches = {}
     sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
@@ -33,11 +33,11 @@ def extract_first_red_team(matches):
 
         red_teams = match.get('alliances', {}).get('red', {}).get('team_keys', [])
         
-        if red_teams:  # Ensure there is at least one red team
-            first_red_team = red_teams[2][3:] if red_teams[2].startswith("frc") else red_teams[2]
+        if len(red_teams) >= 3:  # Ensure there are at least three red teams
+            third_red_team = red_teams[2][3:] if red_teams[2].startswith("frc") else red_teams[2]
             red_matches[str(match_number)] = {
                 "match_number": str(match_number),
-                "team": {"number": first_red_team, "color": "red"}
+                "team": {"number": third_red_team, "color": "red"}
             }
 
     return {"Red 3": red_matches}  # Wrap in "Red 3" key
@@ -56,7 +56,7 @@ def save_matches_to_file(matches_data, filename="RedThree.json"):
 def main():
     matches = get_match_schedule(event_key)
     if matches:
-        red_alliance_data = extract_first_red_team(matches)
+        red_alliance_data = extract_third_red_team(matches)
         save_matches_to_file(red_alliance_data)  # Saves to "RedThree.json"
 
 if __name__ == "__main__":

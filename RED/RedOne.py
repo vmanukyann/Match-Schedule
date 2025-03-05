@@ -1,12 +1,12 @@
 import requests
 import json
-import sys
 import os
+import sys
 
 # Define the API endpoint and your event key
 api_url = "https://www.thebluealliance.com/api/v3"
 event_key = "2025inmis"
-auth_key = "API_KEY"
+auth_key = "LPBFcLNYuYkJhRemUEfXyXNCz8qLHLyIGO7LtKQHY25vzayHqelEodBQdZeJCFrq"
 
 # Define the headers with your authentication key
 headers = {
@@ -22,35 +22,31 @@ def get_match_schedule(event_key):
         print(f"Failed to retrieve matches: {response.status_code}")
         return None
 
-# Function to transform match data for Red 1
-def transform_matches_data(matches):
-    output = {}
+# Function to extract only the FIRST red alliance team
+def extract_first_red_team(matches):
+    red_matches = {}
     sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
     for match in sorted_matches:
         match_number = match.get('match_number')
         if match_number is None:
             continue
-        match_key = str(match_number)
-        teams = []
-        alliances = match.get('alliances', {})
 
-        # Process red alliance, extracting only Red 1 (first position)
-        red_teams = alliances.get('red', {}).get('team_keys', [])
-        if len(red_teams) >= 1:
-            team_number = red_teams[0][3:] if red_teams[0].startswith("frc") else red_teams[0]
-            teams.append({"number": team_number, "color": "red"})
+        red_teams = match.get('alliances', {}).get('red', {}).get('team_keys', [])
+        
+        if red_teams:  # Ensure there is at least one red team
+            first_red_team = red_teams[0][3:] if red_teams[0].startswith("frc") else red_teams[0]
+            red_matches[str(match_number)] = {
+                "match_number": str(match_number),
+                "team": {"number": first_red_team, "color": "red"}
+            }
 
-        output[match_key] = {
-            "match_number": match_key,
-            "teams": teams
-        }
-    return output
+    return {"Red 1": red_matches}  # Wrap in "Red 1" key
 
-# Function to save match data to a JSON file
-def save_matches_to_file(matches_data, directory, filename="RedOne.json"):
+# Function to save red alliance data to a JSON file
+def save_matches_to_file(matches_data, filename="RedOne.json"):
     try:
-        file_path = os.path.join(directory, filename)
+        file_path = os.path.join(os.getcwd(), filename)  # Save in current directory
         with open(file_path, "w") as file:
             json.dump(matches_data, file, indent=4)
         print(f"Data saved to {file_path}")
@@ -59,12 +55,18 @@ def save_matches_to_file(matches_data, directory, filename="RedOne.json"):
 
 # Main function
 def main():
-    json_directory = sys.argv[1]  # Get the JSON directory passed from run_all_scripts.py
+    # Check if a directory argument is passed, otherwise use default
+    if len(sys.argv) > 1:
+        json_directory = sys.argv[1]  # Use directory passed via command line
+    else:
+        json_directory = os.getcwd()  # Default to current directory
+    
+    print(f"Saving to directory: {json_directory}")
 
     matches = get_match_schedule(event_key)
     if matches:
-        transformed_matches = transform_matches_data(matches)
-        save_matches_to_file(transformed_matches, json_directory)
+        red_alliance_data = extract_first_red_team(matches)
+        save_matches_to_file(red_alliance_data)  # Saves to "RedOne.json"
 
 if __name__ == "__main__":
     main()

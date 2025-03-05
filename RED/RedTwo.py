@@ -6,7 +6,7 @@ import os
 # Define the API endpoint and your event key
 api_url = "https://www.thebluealliance.com/api/v3"
 event_key = "2025inmis"
-auth_key = "API_KEY"
+auth_key = "LPBFcLNYuYkJhRemUEfXyXNCz8qLHLyIGO7LtKQHY25vzayHqelEodBQdZeJCFrq		"
 
 # Define the headers with your authentication key
 headers = {

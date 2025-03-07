@@ -24,16 +24,32 @@ def get_match_schedule(event_key):
 # Function to extract only the FIRST blue alliance team
 def extract_first_blue_team(matches):
     blue_matches = {}
-    sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
+    # Filter only qualification matches
+    qual_matches = [m for m in matches if m.get('comp_level') == 'qm']
+
+    # Identify the first qualification match explicitly
+    if qual_matches:
+        first_match = min(qual_matches, key=lambda m: m.get('match_number', float('inf')))
+        match_number = first_match.get('match_number')
+
+        blue_teams = first_match.get('alliances', {}).get('blue', {}).get('team_keys', [])
+        if blue_teams:
+            first_blue_team = blue_teams[0][3:] if blue_teams[0].startswith("frc") else blue_teams[0]
+            blue_matches[str(match_number)] = {
+                "match_number": str(match_number),
+                "team": {"number": first_blue_team, "color": "blue"}
+            }
+
+    # Process the rest of the matches normally
+    sorted_matches = sorted(qual_matches, key=lambda m: m.get('match_number', 0))
     for match in sorted_matches:
         match_number = match.get('match_number')
-        if match_number is None:
-            continue
+        if match_number is None or str(match_number) in blue_matches:
+            continue  # Skip the first match we already processed
 
         blue_teams = match.get('alliances', {}).get('blue', {}).get('team_keys', [])
-        
-        if blue_teams:  # Ensure there is at least one blue team
+        if blue_teams:
             first_blue_team = blue_teams[0][3:] if blue_teams[0].startswith("frc") else blue_teams[0]
             blue_matches[str(match_number)] = {
                 "match_number": str(match_number),

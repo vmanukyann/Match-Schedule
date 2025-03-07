@@ -24,12 +24,30 @@ def get_match_schedule(event_key):
 # Function to extract all red alliance teams
 def extract_red_alliance(matches):
     red_matches = {}
-    sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
+    # Separate qualification matches and playoff matches
+    qual_matches = [m for m in matches if m.get('comp_level') == 'qm']
+    playoff_matches = [m for m in matches if m.get('comp_level') != 'qm']
+
+    # Ensure qualification match 1 is first
+    if qual_matches:
+        first_qual_match = min(qual_matches, key=lambda m: m.get('match_number', float('inf')))
+        match_number = first_qual_match.get('match_number')
+
+        red_teams = first_qual_match.get('alliances', {}).get('red', {}).get('team_keys', [])
+        teams = [{"number": team[3:], "color": "red"} for team in red_teams if team.startswith("frc")]
+
+        red_matches[str(match_number)] = {
+            "match_number": str(match_number),
+            "teams": teams
+        }
+
+    # Process the rest of the matches normally
+    sorted_matches = sorted(qual_matches + playoff_matches, key=lambda m: m.get('match_number', 0))
     for match in sorted_matches:
         match_number = match.get('match_number')
-        if match_number is None:
-            continue
+        if match_number is None or str(match_number) in red_matches:
+            continue  # Skip qual match 1 since it's already added
 
         red_teams = match.get('alliances', {}).get('red', {}).get('team_keys', [])
         teams = [{"number": team[3:], "color": "red"} for team in red_teams if team.startswith("frc")]

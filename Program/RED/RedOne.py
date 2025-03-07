@@ -24,23 +24,40 @@ def get_match_schedule(event_key):
 # Function to extract only the FIRST red alliance team
 def extract_first_red_team(matches):
     red_matches = {}
-    sorted_matches = sorted(matches, key=lambda m: m.get('match_number', 0))
 
-    for match in sorted_matches:
-        match_number = match.get('match_number')
-        if match_number is None:
-            continue
+    # Filter only qualification matches
+    qual_matches = [m for m in matches if m.get('comp_level') == 'qm']
 
-        red_teams = match.get('alliances', {}).get('red', {}).get('team_keys', [])
-        
-        if red_teams:  # Ensure there is at least one red team
+    # Identify the first qualification match explicitly
+    if qual_matches:
+        first_match = min(qual_matches, key=lambda m: m.get('match_number', float('inf')))
+        match_number = first_match.get('match_number')
+
+        red_teams = first_match.get('alliances', {}).get('red', {}).get('team_keys', [])
+        if red_teams:
             first_red_team = red_teams[0][3:] if red_teams[0].startswith("frc") else red_teams[0]
             red_matches[str(match_number)] = {
                 "match_number": str(match_number),
                 "team": {"number": first_red_team, "color": "red"}
             }
 
-    return {"Red 1": red_matches}  # Wrap in "Red 1" key
+    # Process the rest of the matches normally
+    sorted_matches = sorted(qual_matches, key=lambda m: m.get('match_number', 0))
+    for match in sorted_matches:
+        match_number = match.get('match_number')
+        if match_number is None or str(match_number) in red_matches:
+            continue  # Skip the first match we already processed
+
+        red_teams = match.get('alliances', {}).get('red', {}).get('team_keys', [])
+        if red_teams:
+            first_red_team = red_teams[0][3:] if red_teams[0].startswith("frc") else red_teams[0]
+            red_matches[str(match_number)] = {
+                "match_number": str(match_number),
+                "team": {"number": first_red_team, "color": "red"}
+            }
+
+    return {"Red 1": red_matches}  # Wrap in "red 1" key
+
 
 # Function to save red alliance data to a JSON file
 def save_matches_to_file(matches_data, filename="RedOne.json"):
